@@ -1,65 +1,169 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  CheckCircle2,
+  Circle,
+  Flame,
+  Target,
+  TrendingDown,
+  Utensils,
+} from "lucide-react";
 
-export default function Home() {
+export default function FitTrackPro() {
+  const [weight, setWeight] = useState(85);
+  const [target, setTarget] = useState(70);
+  const [history, setHistory] = useState([
+    { date: "Mar 24", weight: 87 },
+    { date: "Mar 26", weight: 86.2 },
+    { date: "Mar 31", weight: 85 },
+  ]);
+
+  // BMI Logic
+  const height = 170; // cm
+  const bmi = (weight / (height / 100) ** 2).toFixed(1);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-8 font-sans">
+      {/* Header Section */}
+      <div className="max-w-5xl mx-auto flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-black tracking-tighter text-green-400">
+          FITTRACK PRO
+        </h1>
+        <div className="bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800 text-sm">
+          BMI: <span className="font-bold text-blue-400">{bmi}</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </div>
+
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Progress Chart */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
+            <div className="flex justify-between items-end mb-6">
+              <div>
+                <p className="text-zinc-500 text-xs uppercase tracking-widest font-bold">
+                  Progress Trend
+                </p>
+                <h2 className="text-3xl font-bold">Weight Journey</h2>
+              </div>
+              <div className="text-right">
+                <span className="text-green-400 font-bold flex items-center gap-1">
+                  <TrendingDown size={18} /> -2.0kg
+                </span>
+              </div>
+            </div>
+
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={history}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#27272a"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#52525b"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis hide domain={["dataMin - 5", "dataMax + 5"]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#18181b",
+                      border: "1px solid #27272a",
+                      borderRadius: "12px",
+                    }}
+                    itemStyle={{ color: "#4ade80" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="weight"
+                    stroke="#4ade80"
+                    strokeWidth={4}
+                    dot={{ r: 6, fill: "#4ade80" }}
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Meal Plan Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-zinc-900 p-5 rounded-2xl border border-zinc-800">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-green-400">
+                <Utensils size={18} /> Meal Checklist
+              </h3>
+              <div className="space-y-3">
+                {[
+                  "Warm Lemon Water",
+                  "2 Eggs + 1 Fruit",
+                  "Fish/Chicken + 1/2 Rice",
+                  "Green Tea + Peanuts",
+                ].map((meal) => (
+                  <div
+                    key={meal}
+                    className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl cursor-pointer hover:bg-zinc-800"
+                  >
+                    <Circle className="text-zinc-600" size={20} />
+                    <span className="text-sm">{meal}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 p-5 rounded-2xl border border-zinc-800">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-blue-400">
+                <Flame size={18} /> Workout Plan
+              </h3>
+              <div className="space-y-3 text-sm text-zinc-400">
+                <p>• 15 Min Spot Jogging</p>
+                <p>• 3x15 Pushups (No Gym Needed)</p>
+                <p>• 3x20 Squats</p>
+                <p>• 30 Sec Plank (3 sets)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Profile & Stats */}
+        <div className="space-y-6">
+          <div className="bg-green-400 text-black p-6 rounded-3xl">
+            <Target className="mb-2" size={32} />
+            <h3 className="font-black text-xl leading-tight">
+              Target:
+              <br />
+              {target} kg
+            </h3>
+            <p className="mt-2 text-sm font-medium opacity-80">
+              Remaining: {(weight - target).toFixed(1)}kg
+            </p>
+          </div>
+
+          <div className="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
+            <h3 className="font-bold mb-4">Log New Weight</h3>
+            <input
+              type="number"
+              className="w-full bg-black border border-zinc-800 p-4 rounded-xl mb-4 text-2xl font-bold"
+              placeholder="00.0"
+              onChange={(e) => setWeight(Number(e.target.value))}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <button className="w-full bg-zinc-100 text-black font-bold py-4 rounded-xl hover:bg-white transition-colors">
+              Update Stats
+            </button>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
