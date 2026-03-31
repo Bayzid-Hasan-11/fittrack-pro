@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitTrack.Pro — Elite Fitness Engine</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #050505; --card: #121214; --card-hover: #1a1a1d;
+            --border: #27272a; --primary: #4ade80; --secondary: #3b82f6;
+            --amber: #fbbf24; --red: #f87171; --orange: #fb923c;
+            --text: #ffffff; --text-dim: #a1a1aa;
+            --font-display: 'Syne', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: default; }
+        body { 
+            font-family: var(--font-body); background: var(--bg); color: var(--text); 
+            line-height: 1.6; overflow-x: hidden; min-height: 100vh;
+        }
+        
+        /* AUTH & UTILS */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        button, input, select, textarea { cursor: pointer; font-family: inherit; }
+
+        /* NAVIGATION */
+        nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(18, 18, 20, 0.95); backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border); display: flex; 
+            justify-content: space-around; padding: 12px 0; z-index: 1000;
+        }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; 
+            color: var(--text-dim); font-size: 10px; font-weight: 700; text-transform: uppercase;
+        }
+        .nav-item.active { color: var(--primary); }
+
+        /* CONTAINERS */
+        main { max-width: 600px; margin: 0 auto; padding: 20px 20px 100px; }
+        section { animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { 
+            background: var(--card); border: 1px solid var(--border); 
+            border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .card:hover { border-color: var(--text-dim); }
+
+        /* INPUTS */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; }
+        input, select, textarea { 
+            width: 100%; background: #000; border: 1px solid var(--border); 
+            border-radius: 12px; padding: 14px; color: #fff; outline: none; font-size: 16px;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .btn { 
+            width: 100%; padding: 16px; border-radius: 14px; border: none; 
+            font-weight: 800; font-family: var(--font-display); font-size: 14px;
+            text-transform: uppercase; transition: 0.3s;
+        }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: #fff; }
+        .btn:active { transform: scale(0.98); }
+
+        /* DASHBOARD ELEMENTS */
+        .header-box { margin-bottom: 30px; }
+        .display-title { font-family: var(--font-display); font-size: 32px; line-height: 1; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        
+        /* HEATMAP */
+        .heatmap-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .heat-cell { 
+            aspect-ratio: 1; border-radius: 6px; background: var(--border); 
+            font-size: 9px; display: flex; align-items: center; justify-content: center;
+        }
+        .cell-red { background: var(--red); color: #000; }
+        .cell-yellow { background: var(--amber); color: #000; }
+        .cell-orange { background: var(--orange); color: #000; }
+        .cell-green { background: var(--primary); color: #000; }
+
+        /* CHECKLIST */
+        .check-item { 
+            display: flex; align-items: center; gap: 15px; padding: 15px; 
+            background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 10px;
+        }
+        .cb-custom { 
+            width: 24px; height: 24px; border: 2px solid var(--primary); 
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+        }
+        .cb-checked { background: var(--primary); }
+        .check-text.done { text-decoration: line-through; color: var(--text-dim); }
+
+        /* BADGES */
+        .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .badge { 
+            background: var(--bg); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 15px 10px; text-align: center; opacity: 0.3; filter: grayscale(1);
+        }
+        .badge.unlocked { opacity: 1; filter: none; border-color: var(--amber); }
+
+        /* ADVICE CARD */
+        .advice-card { background: linear-gradient(45deg, #1e1b4b, #1e293b); border-color: var(--secondary); }
+    </style>
+</head>
+<body>
+
+    <div id="screen-auth" class="flex-center" style="min-height: 100vh;">
+        <main>
+            <div class="header-box text-center">
+                <h1 class="display-title">FITTRACK<span style="color:var(--primary)">.PRO</span></h1>
+                <p style="color:var(--text-dim)">Your data-driven coach.</p>
+            </div>
+            
+            <div id="auth-login" class="card">
+                <h2 class="accent mb-4">Welcome Back</h2>
+                <div class="input-group"><label>Email</label><input type="email" id="login-email"></div>
+                <div class="input-group"><label>Password</label><input type="password" id="login-pass"></div>
+                <button class="btn btn-primary" onclick="App.auth.login()">Sign In</button>
+                <p class="text-center mt-4 text-xs" onclick="App.ui.toggleAuth(false)">Don't have an account? <span style="color:var(--primary)">Register</span></p>
+            </div>
+
+            <div id="auth-register" class="card hidden">
+                <h2 class="accent mb-4">Create Account</h2>
+                <div class="input-group"><label>Full Name</label><input type="text" id="reg-name"></div>
+                <div class="input-group"><label>Email</label><input type="email" id="reg-email"></div>
+                <div class="input-group"><label>Password</label><input type="password" id="reg-pass"></div>
+                <div class="stat-grid">
+                    <div><label>Height (cm)</label><input type="number" id="reg-height"></div>
+                    <div><label>Weight (kg)</label><input type="number" id="reg-weight"></div>
+                </div>
+                <button class="btn btn-primary" onclick="App.auth.register()">Join the Challenge</button>
+                <p class="text-center mt-4 text-xs" onclick="App.ui.toggleAuth(true)">Already a member? <span style="color:var(--primary)">Login</span></p>
+            </div>
+        </main>
+    </div>
+
+    <div id="app-container" class="hidden">
+        <nav id="bottom-nav">
+            <div class="nav-item active" onclick="App.ui.goto('dashboard')"><i data-lucide="layout-grid"></i><span>Dash</span></div>
+            <div class="nav-item" onclick="App.ui.goto('calendar')"><i data-lucide="calendar"></i><span>Heatmap</span></div>
+            <div class="nav-item" onclick="App.ui.goto('meals')"><i data-lucide="utensils"></i><span>Meals</span></div>
+            <div class="nav-item" onclick="App.ui.goto('progress')"><i data-lucide="trending-down"></i><span>Stats</span></div>
+            <div class="nav-item" onclick="App.ui.goto('profile')"><i data-lucide="user"></i><span>Profile</span></div>
+        </nav>
+
+        <main>
+            <section id="view-dashboard">
+                <div class="header-box">
+                    <p class="text-dim" id="dash-date">March 31, 2026</p>
+                    <h1 class="display-title">Hello, <span id="dash-user-name" style="color:var(--primary)">Champion</span></h1>
+                </div>
+
+                <div id="ai-advice-container"></div>
+
+                <div class="stat-grid">
+                    <div class="card" style="margin-bottom:0">
+                        <label>Current</label>
+                        <div class="display-title" style="font-size:24px"><span id="dash-weight-val">0</span><span style="font-size:12px">KG</span></div>
+                    </div>
+                    <div class="card" style="margin-bottom:0">
+                        <label>To Goal</label>
+                        <div class="display-title" style="font-size:24px; color:var(--red)"><span id="dash-goal-val">0</span><span style="font-size:12px">KG</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-family:var(--font-display); font-size:14px; margin-bottom:15px">TODAY'S CHECKLIST <span id="dash-pct" style="float:right; color:var(--primary)">0%</span></h3>
+                    <div id="dash-checklist"></div>
+                    <button class="btn btn-secondary mt-4" style="padding:10px" onclick="App.ui.showTaskModal()">+ Add Task</button>
+                </div>
+            </section>
+
+            <section id="view-calendar" class="hidden">
+                <h2 class="display-title mb-4">Journey <span style="color:var(--secondary)">Heatmap</span></h2>
+                <div class="card">
+                    <div class="heatmap-container" id="calendar-grid"></div>
+                </div>
+                <div class="card">
+                    <label>Current Streak</label>
+                    <div class="display-title" style="color:var(--orange)"><span id="streak-val">0</span> DAYS 🔥</div>
+                </div>
+            </section>
+
+            <section id="view-progress" class="hidden">
+                <h2 class="display-title mb-4">Visual <span style="color:var(--primary)">Analytics</span></h2>
+                <div class="card">
+                    <label>Weight Trend</label>
+                    <canvas id="chart-weight" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <label>BMI Gauge</label>
+                    <div id="bmi-status" style="font-weight:bold; font-size:20px">—</div>
+                    <p id="bmi-val" class="text-dim">Log weight to calculate</p>
+                </div>
+            </section>
+
+            <section id="view-meals" class="hidden">
+                <h2 class="display-title mb-4">Nutrition <span style="color:var(--amber)">Plan</span></h2>
+                <div id="meal-plan-container"></div>
+            </section>
+
+            <section id="view-profile" class="hidden">
+                <h2 class="display-title mb-4">Your <span style="color:var(--primary)">Profile</span></h2>
+                <div class="card">
+                    <h3 class="mb-4">Badges Earned</h3>
+                    <div class="badge-grid" id="badge-container"></div>
+                </div>
+                <div class="card">
+                    <button class="btn btn-secondary mb-2" onclick="App.data.exportJSON()">Export JSON</button>
+                    <button class="btn btn-secondary" style="color:var(--red)" onclick="App.auth.logout()">Sign Out</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-container" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; padding:20px;" class="flex-center">
+        <div class="card" style="max-width:400px; width:100%; margin:auto">
+            <h2 id="modal-title">Log Weight</h2>
+            <div id="modal-body"></div>
+            <div class="stat-grid mt-4">
+                <button class="btn btn-secondary" onclick="App.ui.closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CORE APPLICATION MODULE
+        const App = {
+            state: {
+                currentUser: null,
+                view: 'dashboard',
+                today: new Date().toISOString().split('T')[0]
+            },
+
+            init() {
+                lucide.createIcons();
+                this.storage.loadUser();
+                if(this.state.currentUser) this.ui.launch();
+            },
+
+            auth: {
+                register() {
+                    const email = document.getElementById('reg-email').value;
+                    const pass = document.getElementById('reg-pass').value;
+                    const name = document.getElementById('reg-name').value;
+                    
+                    if(!email || !pass) return alert("Fill all fields");
+
+                    const user = {
+                        id: btoa(email),
+                        name, email, pass, // In prod, hash pass
+                        height: document.getElementById('reg-height').value,
+                        startWeight: document.getElementById('reg-weight').value,
+                        goalWeight: 0,
+                        createdAt: App.state.today,
+                        logs: {}, // date: { weight, completion, tasks: [] }
+                        customTasks: [
+                            { id: 1, text: "30 min Brisk Walk", cat: "Workout" },
+                            { id: 2, text: "8 Glasses Water", cat: "Hydration" },
+                            { id: 3, text: "No Sugar Items", cat: "Meal" }
+                        ]
+                    };
+
+                    localStorage.setItem(`user_${user.id}`, JSON.stringify(user));
+                    alert("Welcome! Please login.");
+                    App.ui.toggleAuth(true);
+                },
+
+                login() {
+                    const email = document.getElementById('login-email').value;
+                    const id = btoa(email);
+                    const userData = localStorage.getItem(`user_${id}`);
+                    
+                    if(userData) {
+                        App.state.currentUser = JSON.parse(userData);
+                        App.ui.launch();
+                    } else {
+                        alert("Account not found");
+                    }
+                },
+
+                logout() {
+                    App.state.currentUser = null;
+                    location.reload();
+                }
+            },
+
+            ui: {
+                toggleAuth(showLogin) {
+                    document.getElementById('auth-login').classList.toggle('hidden', !showLogin);
+                    document.getElementById('auth-register').classList.toggle('hidden', showLogin);
+                },
+
+                launch() {
+                    document.getElementById('screen-auth').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    document.getElementById('dash-user-name').textContent = App.state.currentUser.name;
+                    this.renderAll();
+                },
+
+                goto(view) {
+                    App.state.view = view;
+                    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                    document.getElementById(`view-${view}`).classList.remove('hidden');
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    // Update active nav state
+                    this.renderAll();
+                },
+
+                renderAll() {
+                    this.renderChecklist();
+                    this.renderStats();
+                    this.renderHeatmap();
+                    this.renderMeals();
+                    this.renderBadges();
+                    this.renderAIAdvice();
+                    if(App.state.view === 'progress') this.renderCharts();
+                },
+
+                renderChecklist() {
+                    const user = App.state.currentUser;
+                    const date = App.state.today;
+                    if(!user.logs[date]) user.logs[date] = { weight: 0, tasks: [] };
+                    
+                    const listHtml = user.customTasks.map(task => {
+                        const isDone = user.logs[date].tasks.includes(task.id);
+                        return `
+                            <div class="check-item" onclick="App.data.toggleTask(${task.id})">
+                                <div class="cb-custom ${isDone?'cb-checked':''}">
+                                    ${isDone?'<i data-lucide="check" size="14" style="color:#000"></i>':''}
+                                </div>
+                                <div class="check-text ${isDone?'done':''}">${task.text}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    document.getElementById('dash-checklist').innerHTML = listHtml;
+                    
+                    // Calc %
+                    const pct = Math.round((user.logs[date].tasks.length / user.customTasks.length) * 100) || 0;
+                    document.getElementById('dash-pct').textContent = `${pct}%`;
+                    lucide.createIcons();
+                },
+
+                renderHeatmap() {
+                    const grid = document.getElementById('calendar-grid');
+                    grid.innerHTML = '';
+                    const user = App.state.currentUser;
+                    
+                    // Show 28 days for the view
+                    for(let i=27; i>=0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        const dateStr = d.toISOString().split('T')[0];
+                        const log = user.logs[dateStr];
+                        let colorClass = '';
+                        
+                        if(log && log.tasks.length > 0) {
+                            const p = (log.tasks.length / user.customTasks.length) * 100;
+                            if(p >= 100) colorClass = 'cell-green';
+                            else if(p >= 70) colorClass = 'cell-orange';
+                            else if(p >= 40) colorClass = 'cell-yellow';
+                            else colorClass = 'cell-red';
+                        }
+                        
+                        grid.innerHTML += `<div class="heat-cell ${colorClass}">${d.getDate()}</div>`;
+                    }
+                },
+
+                renderStats() {
+                    const user = App.state.currentUser;
+                    const latestW = App.data.getLatestWeight();
+                    document.getElementById('dash-weight-val').textContent = latestW || user.startWeight;
+                    document.getElementById('dash-goal-val').textContent = user.goalWeight || "—";
+                    
+                    if(latestW) {
+                        const h = user.height / 100;
+                        const bmi = (latestW / (h*h)).toFixed(1);
+                        document.getElementById('bmi-status').textContent = `BMI: ${bmi}`;
+                        document.getElementById('bmi-val').textContent = bmi < 18.5 ? "Underweight" : bmi < 25 ? "Normal Range" : "Overweight";
+                    }
+                },
+
+                renderAIAdvice() {
+                    const container = document.getElementById('ai-advice-container');
+                    const weightLoss = App.data.getWeeklyLoss();
+                    
+                    if(weightLoss < 0.2 && App.data.getLogCount() > 5) {
+                        container.innerHTML = `
+                            <div class="card advice-card">
+                                <label style="color:var(--primary)">AI COACH ADVICE</label>
+                                <p style="font-size:14px">Progress is slower than expected. I suggest adding a <b>10-minute evening walk</b> and swapping one rice meal for vegetables.</p>
+                                <button class="btn btn-primary mt-3" style="padding:8px" onclick="App.data.acceptAdvice()">Accept & Add to Tasks</button>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = '';
+                    }
+                },
+
+                renderMeals() {
+                    const meals = [
+                        { time: "Morning", main: "Warm lemon water + Green tea", alt: "Black coffee (no sugar)" },
+                        { time: "Breakfast", main: "2 Boiled eggs + 1 Fruit", alt: "Oats with milk" },
+                        { time: "Lunch", main: "Half plate rice + Fish curry + Shaak", alt: "Dal + Sabzi + 1 Egg" },
+                        { time: "Dinner", main: "Chicken soup + Stir fry vegetables", alt: "1 Roti + Egg curry" }
+                    ];
+                    
+                    document.getElementById('meal-plan-container').innerHTML = meals.map(m => `
+                        <div class="card">
+                            <label style="color:var(--amber)">${m.time}</label>
+                            <div class="display-title" style="font-size:18px">${m.main}</div>
+                            <p class="text-dim text-xs mt-2">ALT: ${m.alt}</p>
+                        </div>
+                    `).join('');
+                },
+
+                renderBadges() {
+                    const badges = [
+                        { id: 'b1', name: "First Step", icon: "footprints", req: 1 },
+                        { id: 'b2', name: "Week Strong", icon: "flame", req: 7 },
+                        { id: 'b3', name: "Goal Seeker", icon: "target", req: 30 }
+                    ];
+                    const logs = App.data.getLogCount();
+                    document.getElementById('badge-container').innerHTML = badges.map(b => `
+                        <div class="badge ${logs >= b.req ? 'unlocked' : ''}">
+                            <i data-lucide="${b.icon}"></i>
+                            <div style="font-size:10px; margin-top:5px">${b.name}</div>
+                        </div>
+                    `).join('');
+                    lucide.createIcons();
+                },
+
+                renderCharts() {
+                    const ctx = document.getElementById('chart-weight').getContext('2d');
+                    const user = App.state.currentUser;
+                    const data = Object.keys(user.logs).map(k => ({ x: k, y: user.logs[k].weight })).filter(d => d.y > 0);
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            datasets: [{
+                                label: 'Weight',
+                                data: data,
+                                borderColor: '#4ade80',
+                                tension: 0.3,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            scales: { 
+                                x: { display: false },
+                                y: { grid: { color: '#27272a' }, ticks: { color: '#a1a1aa' } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                },
+
+                showTaskModal() {
+                    // Quick simulation
+                    const w = prompt("Enter today's weight (kg):");
+                    if(w) {
+                        App.state.currentUser.logs[App.state.today].weight = parseFloat(w);
+                        App.data.save();
+                        this.renderAll();
+                    }
+                }
+            },
+
+            data: {
+                toggleTask(id) {
+                    const log = App.state.currentUser.logs[App.state.today];
+                    if(log.tasks.includes(id)) {
+                        log.tasks = log.tasks.filter(t => t !== id);
+                    } else {
+                        log.tasks.push(id);
+                    }
+                    this.save();
+                    App.ui.renderChecklist();
+                },
+
+                getLatestWeight() {
+                    const logs = App.state.currentUser.logs;
+                    const dates = Object.keys(logs).sort().reverse();
+                    for(let d of dates) {
+                        if(logs[d].weight > 0) return logs[d].weight;
+                    }
+                    return null;
+                },
+
+                getLogCount() {
+                    return Object.keys(App.state.currentUser.logs).length;
+                },
+
+                getWeeklyLoss() {
+                    // Simplified logic
+                    return 0.1; 
+                },
+
+                acceptAdvice() {
+                    App.state.currentUser.customTasks.push({ id: Date.now(), text: "10 min Evening Walk", cat: "Workout" });
+                    this.save();
+                    App.ui.renderAll();
+                    alert("Task added to your checklist!");
+                },
+
+                save() {
+                    localStorage.setItem(`user_${App.state.currentUser.id}`, JSON.stringify(App.state.currentUser));
+                },
+
+                exportJSON() {
+                    const data = JSON.stringify(App.state.currentUser, null, 2);
+                    const blob = new Blob([data], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `FitTrack_Backup_${App.state.today}.json`;
+                    a.click();
+                }
+            },
+
+            storage: {
+                loadUser() {
+                    // Logic to see if a session exists (not implemented for simplicity)
+                }
+            }
+        };
+
+        // RUN
+        App.init();
+    </script>
+</body>
+</html>
